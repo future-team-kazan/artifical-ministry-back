@@ -143,6 +143,26 @@ else
 echo "Error creating table: values. " . mysqli_error($mysqli)."<br>";
 }
 
+//Всего потрачено зарплаты учреждением
+
+$sql = "CREATE TABLE ".$prefix_BD."values_total
+(
+id INT NOT NULL PRIMARY KEY AUTO_INCREMENT, 
+Employee INT(11),
+Organization INT(11),
+Period DATE,
+Value INT(11)
+)";
+ 
+if (mysqli_query($mysqli,$sql))
+{
+echo "Table values_total created successfully.<br> ";
+}
+else
+{
+echo "Error creating table: values_total. " . mysqli_error($mysqli)."<br>";
+}
+
 //Отчеты по заработной плате
 
 $sql = "CREATE TABLE ".$prefix_BD."values_reports 
