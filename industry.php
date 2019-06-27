@@ -59,7 +59,8 @@ for ($i = 0; $i < $rows_schools; $i++)
 		$school_name = $schools_temp ['Name']; //Получаем название
 			
 		//Получаем последнюю информацию по средней заработной плате из отчета
-		$sql = "SELECT * FROM ".$bd_info_table_prefix."values_reports WHERE Organization = '".$school_id."' ORDER BY Period DESC LIMIT 1";
+		//$sql = "SELECT * FROM ".$bd_info_table_prefix."values_reports WHERE Organization = '".$school_id."' ORDER BY Period DESC LIMIT 1";
+		$sql = "SELECT vr.* FROM ".$bd_info_table_prefix."values_reports vr LEFT JOIN ".$bd_info_table_prefix."values_reports vrj ON vr.Period = vrj.Period AND vr.Period < vrj.Period WHERE vr.Organization = '".$school_id."' ORDER BY Period DESC LIMIT 1";
 		if (mysqli_query($bd_info,$sql))
 		{
 			//Если данные получены, то записываем их значения в тепмовые переменные

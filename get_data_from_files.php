@@ -8,10 +8,7 @@ header('Access-Control-Allow-Headers: X-Requested-With, Content-type');
 
 // Скачиваем страницу с каталогом файлов
 $dir = 'http://95.68.242.113:8887/zupfiles';
-$params = array(
-    'username' => 'СавичеваЮ', // в http://localhost/post.php это будет $_POST['param1'] == '123'
-    'param2' => 'abc', // в http://localhost/post.php это будет $_POST['param2'] == 'abc'
-);
+
 $result = file_get_contents($dir, false, stream_context_create(array(
     'http' => array(
         'method'  => 'GET',
@@ -33,10 +30,7 @@ foreach ($matches[0] as $file) {
 	$filePath = str_replace('"', "/", $file);
 	$url = $dir.$filePath;
 	//print_r($url);
-	$params = array(
-		'username' => 'СавичеваЮ', // в http://localhost/post.php это будет $_POST['param1'] == '123'
-		'password' => '', // в http://localhost/post.php это будет $_POST['param2'] == 'abc'
-	);
+
 	$result = file_get_contents($url, false, stream_context_create(array(
 		'http' => array(
 			'method'  => 'POST',

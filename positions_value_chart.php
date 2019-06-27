@@ -44,19 +44,56 @@ if (!$bd_info->connect_error) {
 	//используем соединение по назначению
 }
 
-//Получаем данные по должностям
-$sql = "SELECT * FROM ".$bd_info_table_prefix."positions";
-$positions = mysqli_query($bd_info,$sql);
+//Получаем последние данные по заработной плате исходя из начислений
+					
+//Получаем последний период начисления зарплаты
+$sql = "SELECT * FROM ".$bd_info_table_prefix."values_history WHERE Period = (SELECT MAX(Period) FROM ".$bd_info_table_prefix."values_history) ORDER BY Period DESC LIMIT 1";
+$last_values = mysqli_query($bd_info,$sql);
+$last_values_temp = mysqli_fetch_assoc($last_values);
+$last_value_date = $last_values_temp ['Date'];
 
-$rows_positions = mysqli_num_rows($positions); // Подсчитываем количество должностей
+//Берем последний месяц получения полной зарплаты
 
-for ($i = 0; $i < $rows_positions; $i++) 
-{
+$timestamp = strtotime($last_value_date);
+$day = date('d', $timestamp);
+$month = date('m', $timestamp);
+$year = date('Y', $timestamp);
+
+$period = $year."-".$month."-01";
+
+$chart_data = array();
+for ($r = 0; $r < 20; $r++) { //Берем Полсдение 20 дат
+	
+	$chartDataPeriod = array();
+	
+	if ($month == 0) {
+		$month = 12;
+		$year = $year - 1;					
+	}
+	
+	$period = $year."-".$month."-01";
+	
+	//array_push($chartDataPeriod, "date" => $period);
+	$chartDataPeriod["date"] = $period;
+	print_r($chart_data_period);
+	//$chartData[$r][0] = array(
+	//"date" => $period
+	//);
+	
+	//Получаем данные по должностям
+	$sql = "SELECT * FROM ".$bd_info_table_prefix."positions";
+	$positions = mysqli_query($bd_info,$sql);
+
+	$rows_positions = mysqli_num_rows($positions); // Подсчитываем количество должностей
+
+	for ($i = 0; $i < $rows_positions; $i++) 
+	{
+
 		$positions_temp = mysqli_fetch_assoc($positions);
 		$positions_id = $positions_temp ['id'];//Получаем id должности
 		$positions_name = $positions_temp ['Name'];//Получаем название должности
 		
-		$pos_value = 0;
+		$pos_value[][] = 0;
 		
 		//Получаем список сотрудников по данной должности
 		$sql = "SELECT * FROM ".$bd_info_table_prefix."employees WHERE Position = '".$positions_id."'";
@@ -64,127 +101,79 @@ for ($i = 0; $i < $rows_positions; $i++)
 
 		$rows_employees = mysqli_num_rows($employees_list); // Подсчитываем количество сотрудников
 
-	
+		$position_id = "";
 		for ($j = 0; $j < $rows_employees; $j++) 
 		{
 			$employe_temp = mysqli_fetch_assoc($employees_list);
 			$employee_id = $employe_temp ['id'];//Получаем id сотрудника
 			
-			//Получаем последние данные по заработной плате исходя из начислений
-				
-			//Получаем последнее число начисления зарплаты
-			$sql = "SELECT * FROM ".$bd_info_table_prefix."values_history WHERE Employee = '".$employee_id."' ORDER BY Period DESC LIMIT 1";
-				
-
-			$last_values = mysqli_query($bd_info,$sql);
-			$last_values_temp = mysqli_fetch_assoc($last_values);
-			$last_value_date = $last_values_temp ['Date'];
-			$last_value_period = $last_values_temp ['Period'];
-			
-			if (strtotime($last_value_period) < strtotime($last_value_date)) {
-				$dateperiod = 1;
-				$last_value_date = $last_value_period;
-			}
-			
-
-			
-			//Берем последний месяц получения полной зарплаты
-			
-			$timestamp = strtotime($last_value_date);
-			$day = date('d', $timestamp);
-			$month = date('m', $timestamp);
-			$year = date('Y', $timestamp);
-			
-			$day_by_values_history = $day;
-			$last_month = $month-1;
-			if ($dateperiod == 1) {
-				$last_month = $month;
-			}
-			$last_period = $year."-".$last_month."-01";
-			$now_period = $year."-".$month."-01";
-
-						
-			if ((15 < $day_by_values_history) && ($day_by_values_history < 25)) {
-				//Получаем данные за текущий период
-				$sql = "SELECT * FROM ".$bd_info_table_prefix."values_history WHERE Employee = '".$employee_id."' AND Period = '".$now_period."'";
-				if ($now_period > $date) {$date = $now_period;}
-			}
-			
-			else {
-				//Получаем данные за предыдущий период
-				$sql = "SELECT * FROM ".$bd_info_table_prefix."values_history WHERE Employee = '".$employee_id."' AND Period = '".$last_period."'";
-				if ($last_period > $date) {$date = $last_period;}
-			}
-			
-			if ($dateperiod == 1) {
-				$sql = "SELECT * FROM ".$bd_info_table_prefix."values_history WHERE Employee = '".$employee_id."' AND Period = '".$last_value_date."'";
-				if ($last_value_date > $date) {$date = $last_value_date;}
-			}
-			
-			$timestamp1 = strtotime($date);
-			$year_1 = date('Y', $timestamp1);
 			
 			
-			$employee_value_by_history = 0;
-			$period_by_history_start = 0;
+			//Получаем данные за текущий период
+			$sql = "SELECT * FROM ".$bd_info_table_prefix."values_history WHERE Employee = '".$employee_id."' AND Period = '".$period."'";
 			
 			$values_by_history = mysqli_query($bd_info,$sql);
 			$rows_values_by_history = mysqli_num_rows($values_by_history);
 			
-			
+			$employee_value_by_history = 0;
 			for ($k = 0; $k < $rows_values_by_history; $k++) 
 			{
 				$values_by_history_temp = mysqli_fetch_assoc($values_by_history);
 				$temp_value_by_history = $values_by_history_temp ['Value'];//Получаем начисляемую сумму
 				$employee_value_by_history = $employee_value_by_history + $temp_value_by_history;
-			}
+			}	
+
+			//Сразу делим зарплату на число работников, чтобы упростить расчет
+			$employee_value_by_history = $employee_value_by_history / $rows_employees;
 			
-			//Подсчитываем сумму всех начислений по должностям
-			$pos_value = $pos_value + $employee_value_by_history;
+			//Суммируем поделенные зарплаты с другими поделенными зарплатами работников и вычисляем реднее значение значение
+			$pos_value[$r][$i] = $pos_value[$r][$i] + $employee_value_by_history;
+			$position_id = "pos".$j;
 		}
+			
+		$chartDataPeriod["$position_id"] = $pos_value[$r][$i];
+		//print_r($chartDataPeriod);
+		array_push($chart_data, $chartDataPeriod);
+		
+		//$chartData[$r][$i+1] = array(
+		//$positions_id => $pos_value[$r][$i]
+		//);
 
+		$legend[$i] = array(
+		"name" => $positions_name,
+		"field" => "pos".$positions_id
+		);
 
-//Вычисляем среднее значение зарплаты по должности
-if ($rows_employees != 0) {$pos_value = $pos_value / $rows_employees;}
-else {
-	//echo "Error rows_employees";
-	$pos_value = 0;
+		/*$value[$i] = array(
+		"date" => $period[$i][0],
+		"value" => $pos_value[$i]
+		);
+
+		//$positions_data_temp1 = array(
+		//"name" => $positions_name,
+		//"value" => $pos_value
+		//);
+
+		$positions_data_temp[$i] = array(
+		"id" => $positions_id,
+		"positions_data" => $value[$i]
+		);
+
+		*/
+
+	}
+	
+$month = $month - 1;
 }
-
-$legend[$i] = array(
-"name" => $positions_name,
-"field" => $positions_id
-);
-
-$name[$i] = $positions_id;
-$value[$i] = $pos_value;
-
-/*$positions_data_temp1 = array(
-"name" => $positions_name,
-"value" => $pos_value
-);
-
-$positions_data_temp[$i] = array(
-"id" => $positions_id,
-"positions_data" => $positions_data_temp1
-);*/
-
-}
-
-
-for ($r = -1; $r < $rows_positions; $r++) {
-	if ($r == -1) {$chartData[$r+1] = array("year" => $year_1);}
-	else {$chartData[$r+1] = array($name[$r] => $value[$r]);}
-}
-
-
 
 $chart = array(
 "legend" => $legend,
-"chartData" => $chartData
+"chartData" => $chart_data
 );
 
 echo json_encode($chart, JSON_UNESCAPED_UNICODE);
+
+//echo json_encode($positions_data_temp, JSON_UNESCAPED_UNICODE);
 
 mysqli_free_result($employees_list);
 mysqli_free_result($positions);
